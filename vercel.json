@@ -4,5 +4,11 @@
       "memory": 3000,
       "maxDuration": 60
     }
-  }
+  },
+  "cleanUrls": true,
+  "devCommand": "next dev",
+  "framework": "nextjs",
+  "installCommand": "npm install",
+  "public": true,
+  "buildCommand": "next build"
 }
