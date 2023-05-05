@@ -5,6 +5,10 @@
       "maxDuration": 60
     }
   },
-  "buildCommand": "next build",
-  "devCommand": "next dev"
+  "cleanUrls": true,
+  "devCommand": "next dev",
+  "framework": "nextjs",
+  "installCommand": "npm install",
+  "public": true,
+  "buildCommand": "next build"
 }
