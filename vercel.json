@@ -4,5 +4,7 @@
       "memory": 3000,
       "maxDuration": 60
     }
-  }
+  },
+  "buildCommand": "next build",
+  "devCommand": "next dev"
 }
