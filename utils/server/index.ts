@@ -63,7 +63,6 @@ export const OpenAIStream = async (
   if (OPENAI_API_TYPE === 'azure') {
     url = `${OPENAI_API_HOST}/openai/deployments/${AZURE_DEPLOYMENT_ID}/chat/completions?api-version=${OPENAI_API_VERSION}`;
   }
-  console.log(reqBody)
   const res = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
@@ -114,7 +113,6 @@ export const OpenAIStream = async (
               controller.close();
               return;
             }
-            console.log(json.choices[0])
             const text = json.choices[0].delta.content;
             const queue = encoder.encode(text);
             controller.enqueue(queue);
