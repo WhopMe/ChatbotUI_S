@@ -5,6 +5,8 @@ import {
   IconPlayerStop,
   IconRepeat,
   IconSend,
+  IconPlayerRecordFilled,
+  IconPlayerRecord,
 } from '@tabler/icons-react';
 import {
   KeyboardEvent,
@@ -15,18 +17,22 @@ import {
   useRef,
   useState,
 } from 'react';
+import React from 'react';
 
 import { useTranslation } from 'next-i18next';
 
 import { Message } from '@/types/chat';
 import { Plugin } from '@/types/plugin';
 import { Prompt } from '@/types/prompt';
+import { speechRecognition, supportsSpeechRecognition, setSpeechRecognition } from '@/types/speech-recognition-types'
 
 import HomeContext from '@/pages/api/home/home.context';
 
 import { PluginSelect } from './PluginSelect';
 import { PromptList } from './PromptList';
 import { VariableModal } from './VariableModal';
+import { openAIApiKey } from '@/utils/app/const';
+import toast from 'react-hot-toast';
 
 interface Props {
   onSend: (message: Message, plugin: Plugin | null) => void;
@@ -53,7 +59,7 @@ export const ChatInput = ({
     dispatch: homeDispatch,
   } = useContext(HomeContext);
 
-  const [content, setContent] = useState<string>();
+  const [content, setContent] = useState<string>('');
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [showPromptList, setShowPromptList] = useState(false);
   const [activePromptIndex, setActivePromptIndex] = useState(0);
@@ -62,6 +68,20 @@ export const ChatInput = ({
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showPluginSelect, setShowPluginSelect] = useState(false);
   const [plugin, setPlugin] = useState<Plugin | null>(null);
+  // voice recording
+  const [recording, setRecording] = useState(false);
+  const [speechError, setSpeechError] = useState<string | null>(null);
+  const [initialMessage, setInitialMessage] = useState('');
+  const [useOpenAIWhisper, setUseOpenAIWhisper] = useState<boolean>(false);
+  // const {
+  //   transcribing,
+  //   transcript,
+  //   startRecording,
+  //   stopRecording,
+  // } = useWhisper({
+  //     apiKey: openAIApiKey || ' ',
+  //     streaming: false,
+  // });
 
   const promptListRef = useRef<HTMLUListElement | null>(null);
 
@@ -105,6 +125,101 @@ export const ChatInput = ({
       textareaRef.current.blur();
     }
   };
+
+  const onSpeechError = useCallback((e: any) => {
+    console.error('speech recognition error', e);
+    setSpeechError(e.message);
+
+    try {
+        speechRecognition?.stop();
+    } catch (e) {
+    }
+
+    // try {
+    //     stopRecording();
+    // } catch (e) { }
+
+    setRecording(false);
+  }, [/* stopRecording */]);
+
+  const onSpeechStart = useCallback(async () => {
+    let granted = false;
+    let denied = false;
+
+    try {
+        const result = await navigator.permissions.query({ name: 'microphone' as any });
+        if (result.state == 'granted') {
+            granted = true;
+        } else if (result.state == 'denied') {
+            denied = true;
+        }
+    } catch (e) { }
+
+    if (!granted && !denied) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+            stream.getTracks().forEach(track => track.stop());
+            granted = true;
+        } catch (e) {
+            denied = true;
+        }
+    }
+
+    if (denied) {
+        onSpeechError(new Error('speech permission was not granted'));
+        return;
+    }
+
+    try {
+      if (!recording) {
+        setRecording(true);
+
+        if (useOpenAIWhisper || !supportsSpeechRecognition) {
+          if (!openAIApiKey) {
+            // dispatch(openOpenAIApiKeyPanel());
+            console.log('Open AI Apikey is invalid');
+            return false;
+          }
+          // recorder.start().catch(onSpeechError);
+          setInitialMessage(content);
+          // await startRecording();
+        } else if (speechRecognition) {
+          const initialMessage = content;
+
+          speechRecognition.continuous = true;
+          speechRecognition.interimResults = true;
+
+          speechRecognition.onresult = (event) => {
+            let transcript = '';
+            console.log('Transcript', event.results);
+            for (let i = 0; i < event.results.length; i++) {
+              if (event.results[i].isFinal && event.results[i][0].confidence) {
+                transcript += event.results[i][0].transcript;
+              }
+            }
+            setContent(initialMessage + ' ' + transcript);
+            // dispatch(setMessage(initialMessage + ' ' + transcript));
+          };
+
+          speechRecognition.start();
+        } else {
+          onSpeechError(new Error('not supported'));
+        }
+      } else {
+          if (useOpenAIWhisper || !supportsSpeechRecognition) {
+            // await stopRecording();
+            setTimeout(() => setRecording(false), 500);
+          } else if (speechRecognition) {
+            speechRecognition.stop();
+            // setRecording(false);
+          } else {
+            onSpeechError(new Error('not supported'));
+          }
+      }
+    } catch (e) {
+      onSpeechError(e);
+    }
+  }, [recording, content, onSpeechError, setInitialMessage, openAIApiKey]);
 
   const handleStopConversation = () => {
     stopConversationRef.current = true;
@@ -256,6 +371,15 @@ export const ChatInput = ({
     };
   }, []);
 
+  useEffect(() => {
+    setSpeechRecognition();
+  }, []);
+
+  useEffect(() => {
+    console.log(speechError);
+    speechError && toast.error(speechError);
+  }, [speechError]);
+
   return (
     <div className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-white to-white pt-6 dark:border-white/20 dark:via-[#343541] dark:to-[#343541] md:pt-2">
       <div className="stretch mx-2 mt-4 flex flex-row gap-3 last:mb-2 md:mx-4 md:mt-[52px] md:last:mb-6 lg:mx-auto lg:max-w-3xl">
@@ -312,40 +436,51 @@ export const ChatInput = ({
             </div>
           )}
 
-          <textarea
-            ref={textareaRef}
-            className="m-0 w-full resize-none border-0 bg-transparent p-0 py-2 pr-8 pl-10 text-black dark:bg-transparent dark:text-white md:py-3 md:pl-10"
-            style={{
-              resize: 'none',
-              bottom: `${textareaRef?.current?.scrollHeight}px`,
-              maxHeight: '400px',
-              overflow: `${
-                textareaRef.current && textareaRef.current.scrollHeight > 400
-                  ? 'auto'
-                  : 'hidden'
-              }`,
-            }}
-            placeholder={
-              t('Type a message or type "/" to select a prompt...') || ''
-            }
-            value={content}
-            rows={1}
-            onCompositionStart={() => setIsTyping(true)}
-            onCompositionEnd={() => setIsTyping(false)}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-          />
+          <div className="flex items-center justify-between pr-2">
+            <textarea
+              ref={textareaRef}
+              className="m-0 w-full resize-none border-0 bg-transparent p-0 py-2 pr-8 pl-10 text-black dark:bg-transparent dark:text-white md:py-3 md:pl-10"
+              style={{
+                resize: 'none',
+                bottom: `${textareaRef?.current?.scrollHeight}px`,
+                maxHeight: '400px',
+                overflow: `${
+                  textareaRef.current && textareaRef.current.scrollHeight > 400
+                    ? 'auto'
+                    : 'hidden'
+                }`,
+              }}
+              placeholder={
+                t('Type a message or type "/" to select a prompt...') || ''
+              }
+              value={content}
+              rows={1}
+              onCompositionStart={() => setIsTyping(true)}
+              onCompositionEnd={() => setIsTyping(false)}
+              onChange={handleChange}
+              onKeyDown={handleKeyDown}
+            />
 
-          <button
-            className="absolute right-2 top-2 rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
-            onClick={handleSend}
-          >
-            {messageIsStreaming ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-neutral-800 opacity-60 dark:border-neutral-100"></div>
-            ) : (
-              <IconSend size={18} />
-            )}
-          </button>
+            <button
+              className="rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
+              onClick={onSpeechStart}
+            >
+              {messageIsStreaming ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-neutral-800 opacity-60 dark:border-neutral-100"></div>
+              ) : recording ? <IconPlayerRecordFilled size={18} /> : <IconPlayerRecord size={18} />}
+            </button>
+
+            <button
+              className="rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
+              onClick={handleSend}
+            >
+              {messageIsStreaming ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-neutral-800 opacity-60 dark:border-neutral-100"></div>
+              ) : (
+                <IconSend size={18} />
+              )}
+            </button>
+          </div>
 
           {showScrollDownButton && (
             <div className="absolute bottom-12 right-0 lg:bottom-0 lg:-right-10">
