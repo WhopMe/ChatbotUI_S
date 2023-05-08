@@ -1,5 +1,5 @@
 import { Message } from '@/types/chat';
-import { OpenAIModel } from '@/types/openai';
+import { OpenAIModel, OpenAIModelID, OpenAIModels } from '@/types/openai';
 
 import { AZURE_DEPLOYMENT_ID, OPENAI_API_HOST, OPENAI_API_TYPE, OPENAI_API_VERSION, OPENAI_ORGANIZATION } from '../app/const';
 
@@ -31,6 +31,35 @@ export const OpenAIStream = async (
   messages: Message[],
 ) => {
   let url = `${OPENAI_API_HOST}/v1/chat/completions`;
+  let reqBody: any;
+  if (model.name === 'TEXT-BABBAGE-001') {
+    url = `${OPENAI_API_HOST}/v1/completions`;
+    reqBody = {
+      ...(OPENAI_API_TYPE === 'openai' && {model: "text-babbage-001"}),
+      prompt: messages.map((message) => message.content).join('\n'),
+      max_tokens: 1000,
+      temperature: temperature,
+      top_p: 1,
+      n: 1,
+      stream: true,
+      logprobs: null,
+      stop: "\n"
+    };
+  } else {
+    reqBody = {
+      ...(OPENAI_API_TYPE === 'openai' && {model: model.id}),
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt,
+        },
+        ...messages,
+      ],
+      max_tokens: 1000,
+      temperature: temperature,
+      stream: true,
+    };
+  }
   if (OPENAI_API_TYPE === 'azure') {
     url = `${OPENAI_API_HOST}/openai/deployments/${AZURE_DEPLOYMENT_ID}/chat/completions?api-version=${OPENAI_API_VERSION}`;
   }
@@ -48,19 +77,7 @@ export const OpenAIStream = async (
       }),
     },
     method: 'POST',
-    body: JSON.stringify({
-      ...(OPENAI_API_TYPE === 'openai' && {model: model.id}),
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt,
-        },
-        ...messages,
-      ],
-      max_tokens: 1000,
-      temperature: temperature,
-      stream: true,
-    }),
+    body: JSON.stringify(reqBody),
   });
 
   const encoder = new TextEncoder();

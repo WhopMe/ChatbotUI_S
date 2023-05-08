@@ -22,6 +22,10 @@ import { MemoizedReactMarkdown } from '../Markdown/MemoizedReactMarkdown';
 import rehypeMathjax from 'rehype-mathjax';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
+import { IconPlayerPlay } from '@tabler/icons-react';
+import { IconPlayerStop } from '@tabler/icons-react';
+import { doSpeechSynthesis, stopSpeechSysthesis } from '@/utils/app/speechSynthesis';
+import { toast } from 'react-hot-toast';
 
 export interface Props {
   message: Message;
@@ -41,6 +45,8 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex, onEdit }) =
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [messageContent, setMessageContent] = useState(message.content);
   const [messagedCopied, setMessageCopied] = useState(false);
+  const [playingVoice, setPlayingVoice] = useState<boolean>(false);
+  const [voices, setVoices] = useState<Array<SpeechSynthesisVoice>>([]);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -112,6 +118,25 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex, onEdit }) =
     });
   };
 
+  const endHandler = () => {
+    setPlayingVoice(false);
+  }
+
+  const playVoiceOfAnswer = () => {
+    if ('speechSynthesis' in window) {
+      doSpeechSynthesis(message.content, voices, endHandler);
+      setPlayingVoice(true);
+    } else {
+      toast.error("Does not support speechSynthesis");
+    }
+  }
+
+  const stopVoiceOfAnswer = () => {
+    stopSpeechSysthesis();
+    
+    setPlayingVoice(false);
+  }
+
   useEffect(() => {
     setMessageContent(message.content);
   }, [message.content]);
@@ -123,6 +148,18 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex, onEdit }) =
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [isEditing]);
+
+  useEffect(() => {
+    const onVoicesChanged = () => {
+      setVoices(window.speechSynthesis.getVoices())
+    }
+    if (window.speechSynthesis) {
+      window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged);
+    }
+    return () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
+    }
+  }, [window.speechSynthesis]);
 
   return (
     <div
@@ -266,7 +303,20 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex, onEdit }) =
                 }`}
               </MemoizedReactMarkdown>
 
+
+              
               <div className="md:-mr-8 ml-1 md:ml-0 flex flex-col md:flex-row gap-4 md:gap-1 items-center md:items-start justify-end md:justify-start">
+                {playingVoice ? <button
+                  className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                  onClick={stopVoiceOfAnswer}
+                >
+                  <IconPlayerStop size={20} />
+                </button> : <button
+                  className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                  onClick={playVoiceOfAnswer}
+                >
+                  <IconPlayerPlay size={20} />
+                </button>}
                 {messagedCopied ? (
                   <IconCheck
                     size={20}
