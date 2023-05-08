@@ -376,7 +376,6 @@ export const ChatInput = ({
   }, []);
 
   useEffect(() => {
-    console.log(speechError);
     speechError && toast.error(speechError);
   }, [speechError]);
 
