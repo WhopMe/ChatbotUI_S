@@ -23,6 +23,10 @@ export class OpenAIError extends Error {
   }
 }
 
+export const oldCompletions = (modelName: string) => {
+  return ['TEXT-DAVINCI-003', 'TEXT-DAVINCI-002'].indexOf(modelName) >= 0;
+}
+
 export const OpenAIStream = async (
   model: OpenAIModel,
   systemPrompt: string,
@@ -32,18 +36,14 @@ export const OpenAIStream = async (
 ) => {
   let url = `${OPENAI_API_HOST}/v1/chat/completions`;
   let reqBody: any;
-  if (model.name === 'TEXT-BABBAGE-001') {
+  if (oldCompletions(model.name)) {
     url = `${OPENAI_API_HOST}/v1/completions`;
     reqBody = {
       ...(OPENAI_API_TYPE === 'openai' && {model: "text-babbage-001"}),
       prompt: messages.map((message) => message.content).join('\n'),
       max_tokens: 1000,
       temperature: temperature,
-      top_p: 1,
-      n: 1,
       stream: true,
-      logprobs: null,
-      stop: "\n"
     };
   } else {
     reqBody = {
@@ -108,12 +108,22 @@ export const OpenAIStream = async (
           const data = event.data;
 
           try {
-            const json = JSON.parse(data);
-            if (json.choices[0].finish_reason != null) {
-              controller.close();
-              return;
+            let text = '';
+            if (oldCompletions(model.name)) {
+              if (data === `[DONE]`) {
+                controller.close();
+                return;
+              }
+              const json = JSON.parse(data);
+              text = json.choices[0].text;
+            } else {
+              const json = JSON.parse(data);
+              if (json.choices[0].finish_reason != null) {
+                controller.close();
+                return;
+              }
+              text = json.choices[0].delta.content;
             }
-            const text = json.choices[0].delta.content;
             const queue = encoder.encode(text);
             controller.enqueue(queue);
           } catch (e) {
