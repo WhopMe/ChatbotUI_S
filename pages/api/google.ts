@@ -48,7 +48,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
     }
     if (googleRes !== undefined) {
       const googleData = await googleRes.json();
-      console.log(googleData);
       const sources: GoogleSource[] = googleData.items.map((item: any) => ({
         title: item.title,
         link: item.link,
@@ -159,8 +158,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
 
       const { choices: choices2 } = await answerRes.json();
       const answer = choices2[0].message.content;
-
-      console.log('answer', answer, typeof answer);
+      
       res.status(200).json({ answer });
     } else {
       res.status(500).json({ error: 'googleRes empty' });

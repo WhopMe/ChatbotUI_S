@@ -26,6 +26,14 @@ export const ModelSelect = () => {
       });
   };
 
+  const handleTemperatureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    selectedConversation &&
+    handleUpdateConversation(selectedConversation, {
+      key: 'temperature',
+      value: parseInt(e.target.value),
+    });
+  }
+
   return (
     <div className="flex flex-col">
       <label className="mb-2 text-left text-neutral-700 dark:text-neutral-400">
@@ -51,7 +59,7 @@ export const ModelSelect = () => {
           ))}
         </select>
       </div>
-      <div className="w-full mt-3 text-left text-neutral-700 dark:text-neutral-400 flex items-center">
+      <div className="w-full mt-3 text-left text-neutral-700 dark:text-neutral-400 flex items-center justify-between">
         <a
           href="https://platform.openai.com/account/usage"
           target="_blank"
@@ -60,6 +68,10 @@ export const ModelSelect = () => {
           <IconExternalLink size={18} className={'inline mr-1'} />
           {t('View Account Usage')}
         </a>
+        <div className="flex gap-1 items-center">
+          <label htmlFor="temperature-setting">Temperature</label>
+          <input id="temperature-setting" className="w-10 bg-transparent dark:text-white text-right border-b border-neutral-200 dark:border-neutral-600 md:rounded-lg md:border" type="number" value={selectedConversation?.temperature} onChange={handleTemperatureChange} max={2} min={0} />
+        </div>
       </div>
     </div>
   );

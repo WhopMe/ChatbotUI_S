@@ -1,4 +1,5 @@
 import {
+  IconBrandGoogle,
   IconCheck,
   IconCopy,
   IconEdit,
@@ -160,7 +161,7 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex, onEdit }) =
       window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged);
     }
   }, [window.speechSynthesis]);
-
+  console.log(message.role);
   return (
     <div
       className={`group md:px-4 ${
@@ -174,6 +175,8 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex, onEdit }) =
         <div className="min-w-[40px] text-right font-bold">
           {message.role === 'assistant' ? (
             <IconRobot size={30} />
+          ) : message.role === 'google-assistant' ? (
+            <IconBrandGoogle size={30} />
           ) : (
             <IconUser size={30} />
           )}
@@ -303,20 +306,7 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex, onEdit }) =
                 }`}
               </MemoizedReactMarkdown>
 
-
-              
               <div className="md:-mr-8 ml-1 md:ml-0 flex flex-col md:flex-row gap-4 md:gap-1 items-center md:items-start justify-end md:justify-start">
-                {playingVoice ? <button
-                  className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                  onClick={stopVoiceOfAnswer}
-                >
-                  <IconPlayerStop size={20} />
-                </button> : <button
-                  className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                  onClick={playVoiceOfAnswer}
-                >
-                  <IconPlayerPlay size={20} />
-                </button>}
                 {messagedCopied ? (
                   <IconCheck
                     size={20}
@@ -330,6 +320,19 @@ export const ChatMessage: FC<Props> = memo(({ message, messageIndex, onEdit }) =
                     <IconCopy size={20} />
                   </button>
                 )}
+                {playingVoice ? <button
+                  className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                  onClick={stopVoiceOfAnswer}
+                >
+                  <img className="my-0" src="/icons/sound-off.svg" alt="" />
+                  {/* <IconPlayerStop size={20} /> */}
+                </button> : <button
+                  className="invisible group-hover:visible focus:visible text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                  onClick={playVoiceOfAnswer}
+                >
+                  <img className="my-0" src="/icons/sound.svg" alt="" />
+                  {/* <IconPlayerPlay size={20} /> */}
+                </button>}
               </div>
             </div>
           )}
