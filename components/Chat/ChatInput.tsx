@@ -382,6 +382,10 @@ export const ChatInput = ({
   return (
     <div className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-white to-white pt-6 dark:border-white/20 dark:via-[#343541] dark:to-[#343541] md:pt-2">
       <div className="stretch mx-2 mt-4 flex flex-row gap-3 last:mb-2 md:mx-4 md:mt-[52px] md:last:mb-6 lg:mx-auto lg:max-w-3xl">
+        <div className="flex items-center">
+          <img className="" src="/icons/thermometer.svg" alt="ChatGPT" />
+          <span className="text-lg">{selectedConversation?.temperature}</span>
+        </div>
         {messageIsStreaming && (
           <button
             className="absolute top-0 left-0 right-0 mx-auto mb-3 flex w-fit items-center gap-3 rounded border border-neutral-200 bg-white py-2 px-4 text-black hover:opacity-50 dark:border-neutral-600 dark:bg-[#343541] dark:text-white md:mb-0 md:mt-2"
@@ -405,15 +409,14 @@ export const ChatInput = ({
 
         <div className="relative mx-2 flex w-full flex-grow flex-col rounded-md border border-black/10 bg-white shadow-[0_0_10px_rgba(0,0,0,0.10)] dark:border-gray-900/50 dark:bg-[#40414F] dark:text-white dark:shadow-[0_0_15px_rgba(0,0,0,0.10)] sm:mx-4">
           <button
-            className="absolute left-0 top-0 rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
+            className="absolute left-1 top-1 rounded-sm p-1 text-neutral-800 opacity-60 hover:bg-neutral-200 hover:text-neutral-900 dark:bg-opacity-50 dark:text-neutral-100 dark:hover:text-neutral-200"
             onClick={() => setShowPluginSelect(!showPluginSelect)}
             onKeyDown={(e) => {}}
           >
             {plugin ? (
-              <IconBrandGoogle size={36} />
+              <IconBrandGoogle size={28} />
             ) : (
-              // <IconBolt size={20} />
-              <img src="/icons/thermometer.svg" alt="ChatGPT" />
+              <IconBolt size={28} />
             )}
           </button>
 
@@ -473,10 +476,10 @@ export const ChatInput = ({
                 <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-neutral-800 opacity-60 dark:border-neutral-100"></div>
               ) : !recording ? (
                 // <IconPlayerRecordFilled size={18} />
-                <img src="/icons/microphone_on.svg" alt="Microphone" />
+                <img src="/icons/microphone.svg" alt="Microphone" />
               ) : (
                 // <IconPlayerRecord size={18} />
-                <img src="/icons/microphone.svg" alt="Microphone" />
+                <img src="/icons/microphone_on.svg" alt="Microphone" />
               )}
             </button>
 

@@ -219,7 +219,7 @@ export const Chat = memo(({ stopConversationRef }: Props) => {
           const { answer } = await response.json();
           const updatedMessages: Message[] = [
             ...updatedConversation.messages,
-            { role: 'assistant', content: answer },
+            { role: 'google-assistant', content: answer },
           ];
           updatedConversation = {
             ...updatedConversation,
