@@ -383,7 +383,7 @@ export const ChatInput = ({
     <div className="absolute bottom-0 left-0 w-full border-transparent bg-gradient-to-b from-transparent via-white to-white pt-6 dark:border-white/20 dark:via-[#343541] dark:to-[#343541] md:pt-2">
       <div className="stretch mx-2 mt-4 flex flex-row gap-3 last:mb-2 md:mx-4 md:mt-[52px] md:last:mb-6 lg:mx-auto lg:max-w-3xl">
         <div className="flex items-center">
-          <img className="" src="/icons/thermometer.svg" alt="ChatGPT" />
+          <img className="pr-2" src="/icons/thermometer.svg" alt="ChatGPT" width={28} height={28}/>
           <span className="text-lg">{selectedConversation?.temperature}</span>
         </div>
         {messageIsStreaming && (
@@ -414,9 +414,10 @@ export const ChatInput = ({
             onKeyDown={(e) => {}}
           >
             {plugin ? (
-              <IconBrandGoogle size={28} />
+              // <IconBrandGoogle size={28} />
+            <img className="" src="/icons/google.svg" alt="ChatGPT" width={28} height={28} />
             ) : (
-              <IconBolt size={28} />
+              <img className="" src="/icons/dog.png" alt="ChatGPT" width={28} height={28} />
             )}
           </button>
 
