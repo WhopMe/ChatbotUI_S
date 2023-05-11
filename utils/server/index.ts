@@ -53,7 +53,7 @@ export const OpenAIStream = async (
           role: 'system',
           content: systemPrompt,
         },
-        ...messages,
+        ...messages.map((message) => ({ role: message.role === "user" ? "user" : "assistant", content: message.content })),
       ],
       max_tokens: 1000,
       temperature: temperature,
